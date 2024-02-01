@@ -1,23 +1,64 @@
-import logo from './logo.svg';
-import './App.css';
+// Import necessary dependencies and components
+import React, { useState } from "react";
+import "./App.css";
+import axios from "axios";
+import AppRoutes from "./routes";
+import AppNavbar from "./Components/Navbar/Navbar";
+import { Baseurl } from "./Components/url/BaseURL";
 
 function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(
+    localStorage.getItem("token") ? true : false
+  );
+
+  const handleLogin = (token, userData) => {
+    localStorage.setItem("token", token);
+    localStorage.setItem("userData", JSON.stringify(userData));
+    setIsLoggedIn(true);
+  };
+
+  const handleLogoutClick = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("Token not found in localStorage.");
+        return;
+      }
+
+      const response = await axios.post(
+        `${Baseurl}/logout`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("userData");
+        setIsLoggedIn(false);
+      }
+    } catch (err) {
+      console.error("Logout failed.", err);
+    }
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      {/* header */}
+      <AppNavbar
+        isLoggedIn={isLoggedIn}
+        handleLogoutClick={handleLogoutClick}
+      />
+
+      {/* Routes */}
+      <AppRoutes
+        isLoggedIn={isLoggedIn}
+        handleLogin={handleLogin}
+        handleLogoutClick={handleLogoutClick}
+      />
     </div>
   );
 }
